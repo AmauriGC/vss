@@ -90,6 +90,8 @@ export interface PlanRequest {
   requestedPlan: Plan
   status: PlanRequestStatus
   createdAt: string
+  months?: number
+  priceTotal?: number
   note?: string
 }
 

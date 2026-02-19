@@ -28,9 +28,11 @@ type ActionFilter = "__all__" | string
 export function AccessLogTable({
   logs,
   title = "Access Logs",
+  userId,
 }: {
   logs: AccessLog[]
   title?: string
+  userId?: string
 }) {
   const [ipQuery, setIpQuery] = useState("")
   const [startDate, setStartDate] = useState("")
@@ -56,6 +58,11 @@ export function AccessLogTable({
       return true
     })
   }, [logs, ipQuery, action, startDate, endDate])
+
+  const getBrowser = (ua: string) => {
+    const head = ua.split("/")[0]?.trim()
+    return head || ua
+  }
 
   return (
     <Card>
@@ -132,8 +139,8 @@ export function AccessLogTable({
               <TableHead>Path</TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Browser</TableHead>
-              <TableHead>Country</TableHead>
               <TableHead>Time</TableHead>
+              <TableHead>User_id</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -149,8 +156,7 @@ export function AccessLogTable({
                   <TableCell className="font-mono text-xs">{log.visitorIp}</TableCell>
                   <TableCell className="font-mono text-xs">{log.path}</TableCell>
                   <TableCell className="text-sm">{log.action}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{log.userAgent}</TableCell>
-                  <TableCell className="text-sm">{log.country}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{getBrowser(log.userAgent)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {new Date(log.timestamp).toLocaleString("en-US", {
                       month: "short",
@@ -159,6 +165,7 @@ export function AccessLogTable({
                       minute: "2-digit",
                     })}
                   </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{userId || "—"}</TableCell>
                 </TableRow>
               ))
             )}

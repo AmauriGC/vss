@@ -46,7 +46,6 @@ import {
 } from "@/components/ui/dialog"
 import { StatCard } from "@/components/stat-card"
 import { PlanBadge, PlanStatusBadge, DeploymentStatusBadge } from "@/components/status-badge"
-import { TrafficChart } from "@/components/traffic-chart"
 import { AccessLogTable } from "@/components/admin/access-log-table"
 import { users, deployments, accessLogs, activityLogs, trafficData } from "@/lib/mock-data"
 import { type Plan } from "@/lib/types"
@@ -141,10 +140,6 @@ export function AdminUserDetailPage() {
           <CreditCard className="h-3.5 w-3.5 mr-1.5" />
           Change Plan
         </Button>
-        <Button size="sm" variant="outline" onClick={() => setModal("renew")}>
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-          Renew Plan
-        </Button>
         <Button
           size="sm"
           variant="outline"
@@ -153,10 +148,6 @@ export function AdminUserDetailPage() {
         >
           <Pause className="h-3.5 w-3.5 mr-1.5" />
           Suspend All
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setModal("email")}>
-          <Send className="h-3.5 w-3.5 mr-1.5" />
-          Send Email
         </Button>
       </div>
 
@@ -300,11 +291,8 @@ export function AdminUserDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Traffic */}
-      <TrafficChart data={trafficData} title={`Traffic for ${user.name}`} />
-
       {/* Access Logs */}
-      <AccessLogTable logs={userAccessLogs} title="Access Logs" />
+      <AccessLogTable logs={userAccessLogs} title="Access Logs" userId={user.id} />
 
       {/* Activity Log */}
       <Card>
@@ -374,37 +362,6 @@ export function AdminUserDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Renew Plan Modal */}
-      <Dialog open={modal === "renew"} onOpenChange={() => setModal(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Renew Plan for {user.name}</DialogTitle>
-            <DialogDescription>
-              Set a new expiration date for this user&apos;s plan. Payment should be confirmed before renewal.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4">
-            <div className="rounded-lg bg-muted/60 p-3 text-sm">
-              <p>Current: <strong>{user.plan}</strong> | Expires: <strong>{user.planExpiresAt || "N/A"}</strong></p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>New Expiration Date</Label>
-              <Input
-                type="date"
-                value={renewDate}
-                onChange={(e) => setRenewDate(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>Cancel</Button>
-            <Button onClick={handleAction} disabled={!renewDate || actionDone}>
-              {actionDone ? "Plan Renewed!" : "Renew Plan"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Suspend All Modal */}
       <Dialog open={modal === "suspend-user"} onOpenChange={() => setModal(null)}>
         <DialogContent>
@@ -435,43 +392,6 @@ export function AdminUserDetailPage() {
               disabled={!suspendReason || actionDone}
             >
               {actionDone ? "Suspended!" : "Suspend All"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Email Modal */}
-      <Dialog open={modal === "email"} onOpenChange={() => setModal(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Send Email to {user.name}</DialogTitle>
-            <DialogDescription>
-              Send a notification email to {user.email}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label>Subject</Label>
-              <Input
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                placeholder="Email subject..."
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Message</Label>
-              <Textarea
-                value={emailBody}
-                onChange={(e) => setEmailBody(e.target.value)}
-                placeholder="Write your message..."
-                rows={5}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>Cancel</Button>
-            <Button onClick={handleAction} disabled={!emailSubject || !emailBody || actionDone}>
-              {actionDone ? "Email Sent!" : "Send Email"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,28 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import {
-  AlertTriangle,
-  CheckCircle,
-  Crown,
-  CreditCard,
-  Shield,
-  Zap,
-} from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PlanBadge } from "@/components/status-badge"
-import { PlanExpirationCard } from "@/components/plan/plan-expiration-card"
-import { PlanStatusIndicator } from "@/components/plan/plan-status-indicator"
-import { RenewalRequestButton } from "@/components/plan/renewal-request-button"
-import {
-  createPlanRequest,
-  currentUser,
-  getPlanRequestsForUser,
-} from "@/lib/mock-data"
-import { type Plan } from "@/lib/types"
-import { getDerivedPlanStatus, getEffectivePlan } from "@/lib/plan-logic"
-import { getPlanLimits } from "@/lib/plan-catalog"
-import { useTodayIsoDate } from "@/lib/use-today-iso-date"
+import { useMemo, useState } from "react";
+import { AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -30,282 +13,243 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-
-const planIcons: Record<Plan, typeof Shield> = {
-  Basic: Shield,
-  Medium: Zap,
-  Full: Crown,
-}
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getDerivedPlanStatus, getEffectivePlan } from "@/lib/plan-logic";
+import { getAllPlanDefinitions, getPlanLimits } from "@/lib/plan-catalog";
+import type { Plan, PlanRequestType } from "@/lib/types";
+import { createPlanRequest, currentUser, getPlanRequestsForUser, getPlanUsersForUser } from "@/lib/mock-data";
+import { useTodayIsoDate } from "@/lib/use-today-iso-date";
 
 export function ClientPlanPage() {
-  const todayIsoDate = useTodayIsoDate()
-  const derivedPlanStatus = getDerivedPlanStatus(currentUser, todayIsoDate)
-  const effectivePlan = getEffectivePlan(currentUser, todayIsoDate)
+  const [, bumpVersion] = useState(0);
+  const todayIsoDate = useTodayIsoDate();
+  const derivedPlanStatus = getDerivedPlanStatus(currentUser, todayIsoDate);
+  const effectivePlan = getEffectivePlan(currentUser, todayIsoDate);
 
-  const [purchaseOpen, setPurchaseOpen] = useState(false)
-  const [requestedPlan, setRequestedPlan] = useState<Plan>("Medium")
-  const [requestNote, setRequestNote] = useState("")
-  const [requestSent, setRequestSent] = useState(false)
+  const isPlanExpired = derivedPlanStatus === "Expired";
+  const isPlanSuspended = currentUser.planStatus === "Suspended";
+  const hasPlanIssue = isPlanExpired || isPlanSuspended;
 
-  const pendingRequests = getPlanRequestsForUser(currentUser.id).filter((r) => r.status === "Pending")
+  const planDefs = getAllPlanDefinitions();
+  const planUsers = getPlanUsersForUser(currentUser.id);
 
-  const isPlanExpired = derivedPlanStatus === "Expired"
-  const isPlanSuspended = currentUser.planStatus === "Suspended"
-  const hasPlanIssue = isPlanExpired || isPlanSuspended
+  const [selectedPlan, setSelectedPlan] = useState<Plan>(effectivePlan);
+  const [monthsText, setMonthsText] = useState("1");
+  const months = useMemo(() => {
+    const n = Number.parseInt(monthsText, 10);
+    if (Number.isNaN(n)) return 1;
+    return Math.max(1, n);
+  }, [monthsText]);
+  const total = useMemo(() => getPlanLimits(selectedPlan).price * months, [selectedPlan, months]);
+
+  const myRequests = getPlanRequestsForUser(currentUser.id);
+  const hasPending = myRequests.some((r) => r.status === "Pending");
+  const pendingReq = myRequests.find((r) => r.status === "Pending") || null;
+  const requestType: PlanRequestType = selectedPlan === currentUser.plan ? "Renewal" : "Upgrade";
+
+  const [requestOpen, setRequestOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Plan</h1>
-        <p className="text-sm text-muted-foreground">
-          Suscripciones mensuales gestionadas por admin
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Plan</h1>
+          <p className="text-sm text-muted-foreground">Planes y compras (Plan_User)</p>
+        </div>
+        <div className="flex justify-end">
+          <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
+            <DialogTrigger asChild>
+              <Button>Solicitud de plan</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Solicitud de plan</DialogTitle>
+                <DialogDescription>
+                  Selecciona plan y meses. Se envía solicitud al admin para aprobar o rechazar.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="overflow-x-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>nombre</TableHead>
+                      <TableHead>status</TableHead>
+                      <TableHead className="text-right">precio</TableHead>
+                      <TableHead className="text-right">tamaño_disco_maximo (MB)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {planDefs.map((def) => {
+                      const limits = getPlanLimits(def.plan);
+                      const status = def.enabled ? "Active" : "Inactive";
+                      const isCurrent = effectivePlan === def.plan;
+
+                      return (
+                        <TableRow key={def.plan}>
+                          <TableCell className="font-medium">
+                            {def.plan}
+                            {isCurrent ? " (current)" : ""}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{status}</TableCell>
+                          <TableCell className="text-right font-medium">{limits.price}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{limits.maxDisk}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <Label>Plan</Label>
+                    <Select value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as Plan)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un plan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {planDefs
+                          .filter((d) => d.enabled)
+                          .map((d) => (
+                            <SelectItem key={d.plan} value={d.plan}>
+                              {d.plan}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Label>Meses</Label>
+                    <Input
+                      inputMode="numeric"
+                      value={monthsText}
+                      onChange={(e) => setMonthsText(e.target.value)}
+                      placeholder="1"
+                    />
+                  </div>
+                </div>
+
+                <div className="text-sm">
+                  Total a pagar: <span className="font-medium">{total}</span>
+                </div>
+
+                <div className="text-xs text-muted-foreground">
+                  Tipo: {requestType} · Estado actual: {currentUser.planStatus}
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setRequestOpen(false)}>
+                  Cerrar
+                </Button>
+                <Button
+                  onClick={() => {
+                    createPlanRequest({
+                      userId: currentUser.id,
+                      type: requestType,
+                      requestedPlan: selectedPlan,
+                      months,
+                    });
+                    bumpVersion((v) => v + 1);
+                    setRequestOpen(false);
+                  }}
+                  disabled={hasPending}
+                >
+                  Enviar solicitud
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {hasPlanIssue && (
         <div
           className={`flex items-start gap-3 rounded-lg p-4 ${
-            isPlanExpired
-              ? "bg-destructive/10 border border-destructive/20"
-              : "bg-warning/10 border border-warning/20"
+            isPlanExpired ? "bg-destructive/10 border border-destructive/20" : "bg-warning/10 border border-warning/20"
           }`}
         >
-          <AlertTriangle
-            className={`h-5 w-5 mt-0.5 shrink-0 ${
-              isPlanExpired ? "text-destructive" : "text-warning"
-            }`}
-          />
+          <AlertTriangle className={`h-5 w-5 mt-0.5 shrink-0 ${isPlanExpired ? "text-destructive" : "text-warning"}`} />
           <div className="flex-1">
-            <p
-              className={`text-sm font-semibold ${
-                isPlanExpired ? "text-destructive" : "text-warning"
-              }`}
-            >
+            <p className={`text-sm font-semibold ${isPlanExpired ? "text-destructive" : "text-warning"}`}>
               {isPlanExpired ? "Tu plan ha expirado" : "Cuenta suspendida"}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {isPlanExpired
-                ? "Tus despliegues pueden quedar suspendidos hasta que el admin confirme la renovación."
+                ? "Tu suscripción (Plan_User) expiró."
                 : "Tu cuenta está suspendida por límites o por estado de plan. Contacta al admin."}
             </p>
-            <div className="mt-3">
-              <RenewalRequestButton
-                variant={isPlanExpired ? "destructive" : "default"}
-              />
-            </div>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col gap-4">
-        <PlanStatusIndicator status={derivedPlanStatus} />
-        <PlanExpirationCard
-          plan={effectivePlan}
-          status={derivedPlanStatus}
-          expiresAt={currentUser.planExpiresAt}
-        />
-      </div>
-
-      {pendingRequests.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Solicitud pendiente</CardTitle>
-            <CardDescription>
-              Un admin debe confirmar el pago y aprobar tu plan.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-2 text-sm">
-              {pendingRequests.map((r) => (
-                <div key={r.id} className="flex items-center justify-between rounded-md border p-3">
-                  <div>
-                    <p className="font-medium">{r.type} → {r.requestedPlan}</p>
-                    <p className="text-xs text-muted-foreground">{r.createdAt}</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Pending</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {hasPending && (
+        <div className="flex items-start justify-between gap-3 rounded-lg border bg-muted p-4">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Tienes una solicitud pendiente</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Espera aprobación del admin.
+              {pendingReq ? (
+                <>
+                  {" "}
+                  Plan: <span className="font-medium">{pendingReq.requestedPlan}</span>
+                  {" · "}Meses: <span className="font-medium">{pendingReq.months ?? 1}</span>
+                  {" · "}Total: <span className="font-medium">{pendingReq.priceTotal ?? total}</span>
+                </>
+              ) : null}
+            </p>
+          </div>
+        </div>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Planes disponibles</CardTitle>
+          <CardTitle className="text-base">Compras (Plan_User)</CardTitle>
           <CardDescription>
-            Los planes se asignan por admin después de confirmar el pago.
+            plan_id, user_id, fecha_compra, fecha_expiracion, total_months_bought, price_total_months_bought
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {(["Basic", "Medium", "Full"] as Plan[]).map((plan) => {
-              const limits = getPlanLimits(plan)
-              const Icon = planIcons[plan]
-              const isCurrent = effectivePlan === plan
-
-              return (
-                <div
-                  key={plan}
-                  className={`rounded-lg border p-4 flex flex-col gap-3 ${
-                    isCurrent ? "border-primary bg-primary/5" : ""
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-5 w-5 text-primary" />
-                      <span className="font-semibold">{plan}</span>
-                    </div>
-                    {isCurrent && <PlanBadge plan={plan} />}
-                  </div>
-
-                  <p className="text-2xl font-bold">
-                    {limits.price === 0 ? "Gratis" : `$${limits.price}`}
-                    {limits.price > 0 && (
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /mes
-                      </span>
-                    )}
-                  </p>
-
-                  <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-3.5 w-3.5 text-success" />
-                      <span>{limits.maxDisk} MB almacenamiento</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-3.5 w-3.5 text-success" />
-                      <span>{limits.maxUpload} MB subida por archivo</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-3.5 w-3.5 text-success" />
-                      <span>Suscripción mensual</span>
-                    </div>
-                  </div>
-
-                  {!isCurrent && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-auto"
-                      onClick={() => {
-                        setRequestedPlan(plan)
-                        setPurchaseOpen(true)
-                      }}
-                    >
-                      Solicitar compra
-                    </Button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>plan_id</TableHead>
+                <TableHead>user_id</TableHead>
+                <TableHead>fecha_compra</TableHead>
+                <TableHead>fecha_expiracion</TableHead>
+                <TableHead className="text-right">total_months_bought</TableHead>
+                <TableHead className="text-right">price_total_months_bought</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {planUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    No records.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                planUsers.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{p.plan_id}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{p.user_id}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.fecha_compra}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.fecha_expiracion}</TableCell>
+                    <TableCell className="text-right">{p.total_months_bought}</TableCell>
+                    <TableCell className="text-right font-medium">{p.price_total_months_bought}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Renovación
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Para renovar o solicitar un cambio de plan, envía una solicitud. El admin
-              procesará el cambio después de confirmar el pago.
-            </p>
-            <RenewalRequestButton className="self-start" />
-            <Button variant="outline" className="self-start" onClick={() => setPurchaseOpen(true)}>
-              Comprar / renovar plan
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Dialog
-        open={purchaseOpen}
-        onOpenChange={(open) => {
-          setPurchaseOpen(open)
-          if (!open) {
-            setRequestSent(false)
-            setRequestNote("")
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Solicitar plan</DialogTitle>
-            <DialogDescription>
-              Envía una solicitud. El admin confirmará el pago y activará la suscripción mensual.
-            </DialogDescription>
-          </DialogHeader>
-
-          {requestSent ? (
-            <div className="rounded-lg border p-4 text-sm">
-              Solicitud enviada. Queda pendiente de aprobación por admin.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>Plan</Label>
-                <Select value={requestedPlan} onValueChange={(v) => setRequestedPlan(v as Plan)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Basic">Basic</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Full">Full</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label>Nota (opcional)</Label>
-                <Textarea
-                  value={requestNote}
-                  onChange={(e) => setRequestNote(e.target.value)}
-                  placeholder="Indica información de pago o detalles para el admin..."
-                  rows={4}
-                />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPurchaseOpen(false)}>
-              Cerrar
-            </Button>
-            {!requestSent && (
-              <Button
-                onClick={() => {
-                  createPlanRequest({
-                    userId: currentUser.id,
-                    requestedPlan,
-                    type: requestedPlan === effectivePlan ? "Renewal" : "Purchase",
-                    note: requestNote || undefined,
-                  })
-                  setRequestSent(true)
-                }}
-              >
-                Enviar solicitud
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
-  )
+  );
 }

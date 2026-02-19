@@ -31,7 +31,6 @@ export function ClientLogViewerPage() {
     [],
   )
 
-  const [selectedDeployment, setSelectedDeployment] = useState<string>("all")
   const [ipFilter, setIpFilter] = useState("")
   const [pathFilter, setPathFilter] = useState("")
   const [actionFilter, setActionFilter] = useState("all")
@@ -48,7 +47,6 @@ export function ClientLogViewerPage() {
 
     return logsForUser
       .filter((l) => {
-        if (selectedDeployment !== "all" && l.deploymentId !== selectedDeployment) return false
         if (actionFilter !== "all" && l.action !== actionFilter) return false
         if (ipFilter && !l.visitorIp.toLowerCase().includes(ipFilter.toLowerCase().trim())) return false
         if (pathFilter && !l.path.toLowerCase().includes(pathFilter.toLowerCase().trim())) return false
@@ -69,19 +67,19 @@ export function ClientLogViewerPage() {
         return true
       })
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  }, [actionFilter, dateFrom, dateTo, ipFilter, pathFilter, selectedDeployment, userDeployments])
+  }, [actionFilter, dateFrom, dateTo, ipFilter, pathFilter, userDeployments])
 
-  const getDeploymentDomain = (deploymentId: string) =>
-    deployments.find((d) => d.id === deploymentId)?.domain || "-"
+  const getBrowser = (ua: string) => {
+    const head = ua.split("/")[0]?.trim()
+    return head || ua
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Detailed Access Logs</h1>
-          <p className="text-sm text-muted-foreground">
-            Explore request details across your deployments
-          </p>
+          <h1 className="text-2xl font-bold">Logs</h1>
+          <p className="text-sm text-muted-foreground">Entidad Logs</p>
         </div>
         <Button variant="outline">
           <Download className="h-4 w-4 mr-2" />
@@ -100,24 +98,7 @@ export function ClientLogViewerPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
-            <div className="flex flex-col gap-2 xl:col-span-2">
-              <Label>Deployment</Label>
-              <Select value={selectedDeployment} onValueChange={setSelectedDeployment}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All deployments" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All deployments</SelectItem>
-                  {userDeployments.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.domain}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             <div className="flex flex-col gap-2">
               <Label>IP contains</Label>
               <Input value={ipFilter} onChange={(e) => setIpFilter(e.target.value)} placeholder="e.g. 192.168" />
@@ -166,25 +147,28 @@ export function ClientLogViewerPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>Deployment</TableHead>
                 <TableHead>IP</TableHead>
-                <TableHead>Action</TableHead>
                 <TableHead>Path</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>User Agent</TableHead>
+                <TableHead>Action</TableHead>
+                <TableHead>Browser</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>User_id</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredLogs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
                     No logs found matching your filters.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredLogs.map((log) => (
                   <TableRow key={log.id}>
+                    <TableCell className="font-mono text-xs">{log.visitorIp}</TableCell>
+                    <TableCell className="font-mono text-xs">{log.path}</TableCell>
+                    <TableCell className="text-sm">{log.action}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{getBrowser(log.userAgent)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(log.timestamp).toLocaleString("en-US", {
                         year: "numeric",
@@ -194,16 +178,7 @@ export function ClientLogViewerPage() {
                         minute: "2-digit",
                       })}
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {getDeploymentDomain(log.deploymentId)}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{log.visitorIp}</TableCell>
-                    <TableCell className="text-sm">{log.action}</TableCell>
-                    <TableCell className="font-mono text-xs">{log.path}</TableCell>
-                    <TableCell className="text-sm">{log.country}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[320px] truncate">
-                      {log.userAgent}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{currentUser.id}</TableCell>
                   </TableRow>
                 ))
               )}

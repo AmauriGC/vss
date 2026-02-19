@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatCard } from "@/components/stat-card"
-import { TrafficChart } from "@/components/traffic-chart"
 import { currentUser, deployments, accessLogs, deploymentTrafficData, trafficData } from "@/lib/mock-data"
 import { useNavigation } from "@/lib/navigation"
 
@@ -103,11 +102,41 @@ export function ClientTrafficPage() {
         />
       </div>
 
-      <TrafficChart data={chartData} title={
-        selectedDeployment === "all"
-          ? "Overall Traffic"
-          : `Traffic for ${userDeployments.find((d) => d.id === selectedDeployment)?.domain}`
-      } />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            {selectedDeployment === "all"
+              ? "Overall Traffic"
+              : `Traffic for ${userDeployments.find((d) => d.id === selectedDeployment)?.domain}`}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Visits</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {chartData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
+                    No traffic data.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                chartData.map((t) => (
+                  <TableRow key={t.date}>
+                    <TableCell className="text-muted-foreground">{t.date}</TableCell>
+                    <TableCell className="text-right font-medium">{t.visits.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>

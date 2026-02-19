@@ -3,9 +3,9 @@
 import {
   LayoutDashboard,
   Plus,
-  History,
   Globe,
   CreditCard,
+  User,
   LogOut,
   Globe2,
 } from "lucide-react"
@@ -24,19 +24,24 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useNavigation, type Page } from "@/lib/navigation"
-import { currentUser } from "@/lib/mock-data"
+import { currentUser, deployments } from "@/lib/mock-data"
 import { PlanBadge } from "@/components/status-badge"
 
-const navItems: { label: string; icon: typeof LayoutDashboard; page: Page }[] = [
-  { label: "Dashboard", icon: LayoutDashboard, page: "client-dashboard" },
-  { label: "New Deployment", icon: Plus, page: "client-new-deployment" },
-  { label: "Plan", icon: CreditCard, page: "client-plan" },
-  { label: "Version History", icon: History, page: "client-versions" },
-  { label: "Domain Requests", icon: Globe, page: "client-domain-request" },
+type NavItem =
+  | { label: string; icon: typeof LayoutDashboard; type: "page"; page: Page }
+  | { label: string; icon: typeof LayoutDashboard; type: "deployment" }
+
+const navItems: NavItem[] = [
+  { label: "Dashboard", icon: LayoutDashboard, type: "page", page: "client-dashboard" },
+  { label: "Mi usuario", icon: User, type: "page", page: "client-user" },
+  { label: "Mi despliegue", icon: Globe, type: "deployment" },
+  { label: "Plan", icon: CreditCard, type: "page", page: "client-plan" },
+  { label: "New Deployment", icon: Plus, type: "page", page: "client-new-deployment" },
 ]
 
 export function ClientSidebar() {
-  const { currentPage, navigate, logout } = useNavigation()
+  const { currentPage, navigate, logout, selectDeployment } = useNavigation()
+  const myDeployment = deployments.find((d) => d.userId === currentUser.id) || null
 
   return (
     <Sidebar>
@@ -57,18 +62,38 @@ export function ClientSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.page}>
-                  <SidebarMenuButton
-                    isActive={currentPage === item.page}
-                    onClick={() => navigate(item.page)}
-                    tooltip={item.label}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) => {
+                if (item.type === "deployment") {
+                  return (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        isActive={currentPage === "client-deployment-detail"}
+                        onClick={() => {
+                          if (myDeployment) selectDeployment(myDeployment.id)
+                        }}
+                        tooltip={item.label}
+                        disabled={!myDeployment}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                }
+
+                return (
+                  <SidebarMenuItem key={item.page}>
+                    <SidebarMenuButton
+                      isActive={currentPage === item.page}
+                      onClick={() => navigate(item.page)}
+                      tooltip={item.label}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

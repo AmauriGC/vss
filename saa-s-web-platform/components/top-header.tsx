@@ -6,10 +6,11 @@ import { useNavigation } from "@/lib/navigation"
 
 const pageTitles: Record<string, string> = {
   "client-dashboard": "Dashboard",
+  "client-user": "Mi usuario",
   "client-new-deployment": "New Deployment",
   "client-deployment-detail": "Deployment Detail",
   "client-versions": "Version History",
-  "client-domain-request": "Domain Requests",
+  "client-plan": "Plan",
   "admin-dashboard": "Admin Overview",
   "admin-users": "User Management",
   "admin-deployments": "Deployment Management",

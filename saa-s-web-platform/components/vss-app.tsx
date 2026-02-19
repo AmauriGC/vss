@@ -11,11 +11,10 @@ import { ClientSidebar } from "@/components/client/client-sidebar"
 import { ClientDashboard } from "@/components/client/client-dashboard"
 import { NewDeploymentPage } from "@/components/client/new-deployment-page"
 import { DeploymentDetailPage } from "@/components/client/deployment-detail-page"
-import { VersionsPage } from "@/components/client/versions-page"
-import { DomainRequestPage } from "@/components/client/domain-request-page"
 import { ClientTrafficPage } from "@/components/client/client-traffic-page"
 import { ClientLogViewerPage } from "@/components/client/client-log-viewer-page"
 import { ClientPlanPage } from "@/components/client/client-plan-page"
+import { ClientUserPage } from "@/components/client/client-user-page"
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
@@ -63,10 +62,9 @@ export function VSSApp() {
           <TopHeader />
           <div className="flex-1 overflow-auto">
             {currentPage === "client-dashboard" && <ClientDashboard />}
+            {currentPage === "client-user" && <ClientUserPage />}
             {currentPage === "client-new-deployment" && <NewDeploymentPage />}
             {currentPage === "client-deployment-detail" && <DeploymentDetailPage />}
-            {currentPage === "client-versions" && <VersionsPage />}
-            {currentPage === "client-domain-request" && <DomainRequestPage />}
             {currentPage === "client-traffic" && <ClientTrafficPage />}
             {currentPage === "client-log-viewer" && <ClientLogViewerPage />}
             {currentPage === "client-plan" && <ClientPlanPage />}

@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/dialog"
 import { StatCard } from "@/components/stat-card"
 import { DeploymentStatusBadge } from "@/components/status-badge"
-import { TrafficChart } from "@/components/traffic-chart"
 import { AccessLogTable } from "@/components/admin/access-log-table"
 import { deployments, users, versions, accessLogs, deploymentTrafficData, trafficData } from "@/lib/mock-data"
 import { useNavigation } from "@/lib/navigation"
@@ -186,9 +185,6 @@ export function AdminDeploymentDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Traffic Chart */}
-      <TrafficChart data={chartData} title={`Traffic for ${deployment.domain}`} />
-
       {/* Version History */}
       <Card>
         <CardHeader>
@@ -233,7 +229,7 @@ export function AdminDeploymentDetailPage() {
         </CardContent>
       </Card>
 
-      <AccessLogTable logs={depAccessLogs} title="Access Logs" />
+      <AccessLogTable logs={depAccessLogs} title="Access Logs" userId={deployment.userId} />
 
       {/* Suspend Modal with email reason */}
       <Dialog open={modal === "suspend"} onOpenChange={() => setModal(null)}>

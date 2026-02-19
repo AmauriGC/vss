@@ -13,6 +13,23 @@ import type {
 } from "./types"
 import { getPlanLimits } from "./plan-catalog"
 
+let __idSeq = 0
+
+function nextId(prefix: string) {
+  __idSeq = (__idSeq + 1) % 1_000_000
+  return `${prefix}_${Date.now()}_${__idSeq}`
+}
+
+export type Plan_User = {
+  id: string
+  plan_id: Plan
+  user_id: string
+  fecha_compra: string
+  fecha_expiracion: string
+  total_months_bought: number
+  price_total_months_bought: number
+}
+
 export const currentUser: User = {
   id: "u1",
   name: "Alex Rivera",
@@ -22,8 +39,8 @@ export const currentUser: User = {
   planStatus: "Active",
   planExpiresAt: null,
   createdAt: "2025-09-15",
-  deploymentsCount: 3,
-  diskUsage: 28,
+  deploymentsCount: 1,
+  diskUsage: 10,
   maxDisk: 50,
 }
 
@@ -65,8 +82,8 @@ export const users: User[] = [
     planStatus: "Active",
     planExpiresAt: "2026-04-20",
     createdAt: "2025-08-20",
-    deploymentsCount: 5,
-    diskUsage: 310,
+    deploymentsCount: 1,
+    diskUsage: 120,
     maxDisk: 500,
   },
   {
@@ -78,8 +95,8 @@ export const users: User[] = [
     planStatus: "Expired",
     planExpiresAt: "2026-02-01",
     createdAt: "2025-11-10",
-    deploymentsCount: 2,
-    diskUsage: 45,
+    deploymentsCount: 1,
+    diskUsage: 8,
     maxDisk: 200,
   },
   {
@@ -103,40 +120,18 @@ export const deployments: Deployment[] = [
     userId: "u1",
     domain: "portfolio.vss.io",
     status: "Active",
-    currentVersion: 3,
+    currentVersion: 1,
     diskUsage: 10,
     traffic: 12450,
     createdAt: "2025-10-01",
     updatedAt: "2026-02-10",
   },
   {
-    id: "d2",
-    userId: "u1",
-    domain: "docs.vss.io",
-    status: "Active",
-    currentVersion: 1,
-    diskUsage: 8,
-    traffic: 3200,
-    createdAt: "2025-11-15",
-    updatedAt: "2025-11-15",
-  },
-  {
-    id: "d3",
-    userId: "u1",
-    domain: "blog.vss.io",
-    status: "Updating",
-    currentVersion: 5,
-    diskUsage: 10,
-    traffic: 8900,
-    createdAt: "2025-09-20",
-    updatedAt: "2026-02-12",
-  },
-  {
     id: "d4",
     userId: "u2",
     domain: "landing.vss.io",
     status: "Active",
-    currentVersion: 2,
+    currentVersion: 1,
     diskUsage: 12,
     traffic: 1500,
     createdAt: "2025-10-10",
@@ -147,22 +142,11 @@ export const deployments: Deployment[] = [
     userId: "u3",
     domain: "shop.vss.io",
     status: "Error",
-    currentVersion: 4,
+    currentVersion: 1,
     diskUsage: 120,
     traffic: 45000,
     createdAt: "2025-08-25",
     updatedAt: "2026-02-08",
-  },
-  {
-    id: "d6",
-    userId: "u3",
-    domain: "api-docs.vss.io",
-    status: "Active",
-    currentVersion: 2,
-    diskUsage: 55,
-    traffic: 22000,
-    createdAt: "2025-09-05",
-    updatedAt: "2026-01-30",
   },
   {
     id: "d7",
@@ -176,49 +160,24 @@ export const deployments: Deployment[] = [
     updatedAt: "2025-12-01",
   },
   {
-    id: "d8",
-    userId: "u3",
-    domain: "gallery.vss.io",
-    status: "Active",
-    currentVersion: 3,
-    diskUsage: 85,
-    traffic: 15000,
-    createdAt: "2025-10-15",
-    updatedAt: "2026-02-05",
-  },
-  {
     id: "d9",
     userId: "u5",
     domain: "personal.vss.io",
     status: "LimitExceeded",
-    currentVersion: 2,
+    currentVersion: 1,
     diskUsage: 48,
     traffic: 300,
     createdAt: "2026-01-10",
     updatedAt: "2026-02-01",
   },
-  {
-    id: "d10",
-    userId: "u4",
-    domain: "project.vss.io",
-    status: "Suspended",
-    currentVersion: 3,
-    diskUsage: 37,
-    traffic: 2100,
-    createdAt: "2025-11-20",
-    updatedAt: "2026-01-15",
-  },
 ]
 
 export const versions: Version[] = [
-  { id: "v1", deploymentId: "d1", versionNumber: 1, fileName: "portfolio-v1.zip", fileSize: 2.1, uploadedAt: "2025-10-01" },
-  { id: "v2", deploymentId: "d1", versionNumber: 2, fileName: "portfolio-v2.zip", fileSize: 2.4, uploadedAt: "2025-12-15" },
-  { id: "v3", deploymentId: "d1", versionNumber: 3, fileName: "portfolio-v3.zip", fileSize: 3.0, uploadedAt: "2026-02-10" },
-  { id: "v4", deploymentId: "d3", versionNumber: 1, fileName: "blog-v1.zip", fileSize: 1.8, uploadedAt: "2025-09-20" },
-  { id: "v5", deploymentId: "d3", versionNumber: 2, fileName: "blog-v2.zip", fileSize: 2.0, uploadedAt: "2025-10-10" },
-  { id: "v6", deploymentId: "d3", versionNumber: 3, fileName: "blog-v3.zip", fileSize: 2.5, uploadedAt: "2025-11-20" },
-  { id: "v7", deploymentId: "d3", versionNumber: 4, fileName: "blog-v4.zip", fileSize: 2.8, uploadedAt: "2026-01-05" },
-  { id: "v8", deploymentId: "d3", versionNumber: 5, fileName: "blog-v5.zip", fileSize: 3.2, uploadedAt: "2026-02-12" },
+  { id: "v3", deploymentId: "d1", versionNumber: 1, fileName: "portfolio.zip", fileSize: 3.0, uploadedAt: "2026-02-10" },
+  { id: "v9", deploymentId: "d4", versionNumber: 1, fileName: "landing.zip", fileSize: 2.2, uploadedAt: "2026-01-20" },
+  { id: "v10", deploymentId: "d5", versionNumber: 1, fileName: "shop.zip", fileSize: 5.6, uploadedAt: "2026-02-08" },
+  { id: "v11", deploymentId: "d7", versionNumber: 1, fileName: "resume.zip", fileSize: 1.1, uploadedAt: "2025-12-01" },
+  { id: "v12", deploymentId: "d9", versionNumber: 1, fileName: "personal.zip", fileSize: 4.8, uploadedAt: "2026-02-01" },
 ]
 
 export const activityLogs: ActivityLog[] = [
@@ -254,9 +213,9 @@ export const trafficData: TrafficEntry[] = [
 export const domainRequests: DomainRequest[] = [
   {
     id: "dr1",
-    deploymentId: "d3",
-    currentDomain: "blog.vss.io",
-    requestedDomain: "myblog.vss.io",
+    deploymentId: "d1",
+    currentDomain: "portfolio.vss.io",
+    requestedDomain: "myportfolio.vss.io",
     status: "Pending",
     createdAt: "2026-02-13",
   },
@@ -266,19 +225,50 @@ export const accessLogs: AccessLog[] = [
   { id: "al1", deploymentId: "d1", visitorIp: "203.0.113.42", timestamp: "2026-02-14T10:23:00Z", path: "/", action: "Page view", userAgent: "Chrome/120", country: "US" },
   { id: "al2", deploymentId: "d1", visitorIp: "198.51.100.17", timestamp: "2026-02-14T10:25:00Z", path: "/about", action: "Page view", userAgent: "Firefox/115", country: "UK" },
   { id: "al3", deploymentId: "d1", visitorIp: "203.0.113.42", timestamp: "2026-02-14T10:26:00Z", path: "/projects", action: "Page view", userAgent: "Chrome/120", country: "US" },
-  { id: "al4", deploymentId: "d2", visitorIp: "192.0.2.89", timestamp: "2026-02-14T11:00:00Z", path: "/docs/getting-started", action: "Page view", userAgent: "Safari/17", country: "DE" },
-  { id: "al5", deploymentId: "d2", visitorIp: "192.0.2.89", timestamp: "2026-02-14T11:02:00Z", path: "/docs/api-reference", action: "Page view", userAgent: "Safari/17", country: "DE" },
-  { id: "al6", deploymentId: "d3", visitorIp: "198.51.100.200", timestamp: "2026-02-14T09:15:00Z", path: "/", action: "Page view", userAgent: "Chrome/120", country: "FR" },
-  { id: "al7", deploymentId: "d3", visitorIp: "203.0.113.100", timestamp: "2026-02-14T09:30:00Z", path: "/post/hello-world", action: "Page view", userAgent: "Edge/120", country: "JP" },
   { id: "al8", deploymentId: "d5", visitorIp: "198.51.100.55", timestamp: "2026-02-14T08:45:00Z", path: "/products", action: "Page view", userAgent: "Chrome/120", country: "US" },
   { id: "al9", deploymentId: "d5", visitorIp: "198.51.100.55", timestamp: "2026-02-14T08:46:00Z", path: "/cart", action: "Add to cart", userAgent: "Chrome/120", country: "US" },
-  { id: "al10", deploymentId: "d6", visitorIp: "203.0.113.75", timestamp: "2026-02-14T12:00:00Z", path: "/v1/endpoints", action: "Page view", userAgent: "Firefox/115", country: "CA" },
-  { id: "al11", deploymentId: "d8", visitorIp: "192.0.2.150", timestamp: "2026-02-14T07:30:00Z", path: "/gallery/landscape", action: "Page view", userAgent: "Safari/17", country: "AU" },
   { id: "al12", deploymentId: "d1", visitorIp: "198.51.100.33", timestamp: "2026-02-13T22:10:00Z", path: "/contact", action: "Form submit", userAgent: "Chrome/120", country: "BR" },
-  { id: "al13", deploymentId: "d1", visitorIp: "203.0.113.88", timestamp: "2026-02-13T18:45:00Z", path: "/", action: "Page view", userAgent: "Mobile Safari/17", country: "IN" },
-  { id: "al14", deploymentId: "d3", visitorIp: "192.0.2.200", timestamp: "2026-02-13T16:20:00Z", path: "/post/react-tips", action: "Page view", userAgent: "Chrome/120", country: "KR" },
-  { id: "al15", deploymentId: "d6", visitorIp: "198.51.100.120", timestamp: "2026-02-13T14:00:00Z", path: "/v1/auth", action: "Page view", userAgent: "Postman/10", country: "US" },
+  { id: "al13", deploymentId: "d4", visitorIp: "203.0.113.88", timestamp: "2026-02-13T18:45:00Z", path: "/", action: "Page view", userAgent: "Mobile Safari/17", country: "IN" },
+  { id: "al14", deploymentId: "d7", visitorIp: "192.0.2.200", timestamp: "2026-02-13T16:20:00Z", path: "/", action: "Page view", userAgent: "Chrome/120", country: "KR" },
+  { id: "al15", deploymentId: "d9", visitorIp: "198.51.100.120", timestamp: "2026-02-13T14:00:00Z", path: "/", action: "Page view", userAgent: "Postman/10", country: "US" },
 ]
+
+export const planUsers: Plan_User[] = [
+  {
+    id: "pu1",
+    plan_id: "Basic",
+    user_id: "u1",
+    fecha_compra: "2026-02-01",
+    fecha_expiracion: "2026-03-01",
+    total_months_bought: 1,
+    price_total_months_bought: getPlanLimits("Basic").price * 1,
+  },
+  {
+    id: "pu2",
+    plan_id: "Full",
+    user_id: "u3",
+    fecha_compra: "2026-01-20",
+    fecha_expiracion: "2026-02-20",
+    total_months_bought: 1,
+    price_total_months_bought: getPlanLimits("Full").price * 1,
+  },
+  {
+    id: "pu3",
+    plan_id: "Medium",
+    user_id: "u4",
+    fecha_compra: "2026-01-01",
+    fecha_expiracion: "2026-02-01",
+    total_months_bought: 1,
+    price_total_months_bought: getPlanLimits("Medium").price * 1,
+  },
+]
+
+export function getPlanUsersForUser(userId: string) {
+  return planUsers
+    .filter((p) => p.user_id === userId)
+    .slice()
+    .sort((a, b) => b.fecha_compra.localeCompare(a.fecha_compra))
+}
 
 let planRequests: PlanRequest[] = []
 
@@ -300,9 +290,107 @@ function addDaysIso(days: number) {
   return d.toISOString().slice(0, 10)
 }
 
+function addMonthsIso(fromIso: string, months: number) {
+  const d = new Date(`${fromIso}T00:00:00Z`)
+  // Nota: JS ajusta automáticamente si el día no existe en el mes objetivo.
+  d.setMonth(d.getMonth() + months)
+  return d.toISOString().slice(0, 10)
+}
+
 function isIsoExpired(expiresAt: string | null, todayIsoDate: string) {
   if (!expiresAt) return false
   return expiresAt <= todayIsoDate
+}
+
+function recomputeUserAggregates(todayIsoDate: string = isoToday()) {
+  for (const user of users) {
+    const userDeployments = deployments.filter((d) => d.userId === user.id)
+    user.deploymentsCount = userDeployments.length
+    user.diskUsage = userDeployments.reduce((acc, d) => acc + d.diskUsage, 0)
+
+    const expired = isIsoExpired(user.planExpiresAt, todayIsoDate)
+    const effectivePlan: Plan = expired ? "Basic" : user.plan
+    user.maxDisk = getPlanLimits(effectivePlan).maxDisk
+  }
+}
+
+function spliceInPlace<T>(target: T[], next: T[]) {
+  target.splice(0, target.length, ...next)
+}
+
+export function replaceSingleDeploymentForUser(input: {
+  userId: string
+  domain: string
+  zipFileName: string
+  zipFileSizeMb: number
+  createdAt?: string
+}) {
+  const nowIso = new Date().toISOString()
+  const dateIso = input.createdAt || nowIso.slice(0, 10)
+
+  const removedDeploymentIds = deployments
+    .filter((d) => d.userId === input.userId)
+    .map((d) => d.id)
+
+  if (removedDeploymentIds.length > 0) {
+    spliceInPlace(
+      deployments,
+      deployments.filter((d) => d.userId !== input.userId),
+    )
+    spliceInPlace(
+      versions,
+      versions.filter((v) => !removedDeploymentIds.includes(v.deploymentId)),
+    )
+    spliceInPlace(
+      accessLogs,
+      accessLogs.filter((l) => !removedDeploymentIds.includes(l.deploymentId)),
+    )
+    spliceInPlace(
+      domainRequests,
+      domainRequests.filter((r) => !removedDeploymentIds.includes(r.deploymentId)),
+    )
+    for (const id of removedDeploymentIds) {
+      delete deploymentTrafficData[id]
+    }
+  }
+
+  const newDeployment: Deployment = {
+    id: nextId("d"),
+    userId: input.userId,
+    domain: input.domain,
+    status: "Active",
+    currentVersion: 1,
+    diskUsage: +input.zipFileSizeMb.toFixed(2),
+    traffic: 0,
+    createdAt: dateIso,
+    updatedAt: dateIso,
+  }
+
+  deployments.unshift(newDeployment)
+
+  const newVersion: Version = {
+    id: nextId("v"),
+    deploymentId: newDeployment.id,
+    versionNumber: 1,
+    fileName: input.zipFileName,
+    fileSize: +input.zipFileSizeMb.toFixed(2),
+    uploadedAt: dateIso,
+  }
+  versions.unshift(newVersion)
+
+  activityLogs.unshift({
+    id: nextId("a"),
+    userId: input.userId,
+    action: removedDeploymentIds.length > 0 ? "Replaced deployment" : "Deployed",
+    target: input.domain,
+    timestamp: nowIso,
+    ip: "client",
+  })
+
+  deploymentTrafficData[newDeployment.id] = []
+
+  recomputeUserAggregates()
+  return newDeployment
 }
 
 export function reconcileDeploymentsForUser(userId: string, todayIsoDate: string = isoToday()) {
@@ -333,19 +421,68 @@ export function reconcileDeploymentsForUser(userId: string, todayIsoDate: string
     })
 }
 
+export function uploadNewVersionForDeployment(input: {
+  deploymentId: string
+  zipFileName: string
+  zipFileSizeMb: number
+  uploadedAt?: string
+}) {
+  const deployment = deployments.find((d) => d.id === input.deploymentId)
+  if (!deployment) return null
+
+  const nowIso = new Date().toISOString()
+  const dateIso = input.uploadedAt || nowIso.slice(0, 10)
+
+  const depVersions = versions.filter((v) => v.deploymentId === input.deploymentId)
+  const nextVersionNumber =
+    (depVersions.length ? Math.max(...depVersions.map((v) => v.versionNumber)) : 0) + 1
+
+  const newVersion: Version = {
+    id: nextId("v"),
+    deploymentId: input.deploymentId,
+    versionNumber: nextVersionNumber,
+    fileName: input.zipFileName,
+    fileSize: +input.zipFileSizeMb.toFixed(2),
+    uploadedAt: dateIso,
+  }
+
+  versions.unshift(newVersion)
+  deployment.currentVersion = nextVersionNumber
+  deployment.diskUsage = +input.zipFileSizeMb.toFixed(2)
+  deployment.updatedAt = dateIso
+
+  activityLogs.unshift({
+    id: nextId("a"),
+    userId: deployment.userId,
+    action: "Uploaded new version",
+    target: deployment.domain,
+    timestamp: nowIso,
+    ip: "client",
+  })
+
+  recomputeUserAggregates()
+  return newVersion
+}
+
 export function createPlanRequest(input: {
   userId: string
   type: PlanRequestType
   requestedPlan: Plan
+  months?: number
   note?: string
 }) {
+  const months = Math.max(1, Math.floor(input.months ?? 1))
+  const priceTotal = getPlanLimits(input.requestedPlan).price * months
+
   const req: PlanRequest = {
-    id: `pr_${Date.now()}`,
+    id: nextId("pr"),
     userId: input.userId,
     type: input.type,
     requestedPlan: input.requestedPlan,
     status: "Pending",
     createdAt: isoToday(),
+    months,
+    priceTotal,
     note: input.note,
   }
 
@@ -366,15 +503,72 @@ export function approvePlanRequest(requestId: string, opts?: { expiresAt?: strin
   const user = users.find((u) => u.id === req.userId)
   if (!user) return
 
+  const fecha_compra = isoToday()
+  const months = Math.max(1, Math.floor(req.months ?? 1))
+  const computedExpiresAt = addMonthsIso(fecha_compra, months)
+  const priceTotal = req.priceTotal ?? getPlanLimits(req.requestedPlan).price * months
+
+  planUsers.unshift({
+    id: nextId("pu"),
+    plan_id: req.requestedPlan,
+    user_id: req.userId,
+    fecha_compra,
+    fecha_expiracion: computedExpiresAt,
+    total_months_bought: months,
+    price_total_months_bought: priceTotal,
+  })
+
   user.plan = req.requestedPlan
   user.planStatus = "Active"
-  user.planExpiresAt = opts?.expiresAt || addDaysIso(30)
+  user.planExpiresAt = opts?.expiresAt || computedExpiresAt
 
   reconcileDeploymentsForUser(user.id)
+  recomputeUserAggregates()
 }
 
 export function rejectPlanRequest(requestId: string) {
   setPlanRequestStatus(requestId, "Rejected")
+}
+
+export function createDomainRequest(input: {
+  deploymentId: string
+  requestedSubdomain: string
+}) {
+  const deployment = deployments.find((d) => d.id === input.deploymentId)
+  if (!deployment) throw new Error("Deployment not found")
+
+  const cleaned = input.requestedSubdomain
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, "")
+
+  if (!cleaned) throw new Error("Dominio inválido")
+
+  const requestedDomain = `${cleaned}.vss.io`
+  if (requestedDomain.toLowerCase() === deployment.domain.toLowerCase()) {
+    throw new Error("El dominio solicitado es igual al actual")
+  }
+
+  const taken = new Set(
+    deployments
+      .filter((d) => d.id !== deployment.id)
+      .map((d) => d.domain.toLowerCase()),
+  )
+  if (taken.has(requestedDomain.toLowerCase())) {
+    throw new Error("El dominio ya está en uso")
+  }
+
+  const req: DomainRequest = {
+    id: nextId("dr"),
+    deploymentId: deployment.id,
+    currentDomain: deployment.domain,
+    requestedDomain,
+    status: "Pending",
+    createdAt: isoToday(),
+  }
+
+  domainRequests.unshift(req)
+  return req
 }
 
 export const deploymentTrafficData: Record<string, TrafficEntry[]> = {
@@ -382,15 +576,21 @@ export const deploymentTrafficData: Record<string, TrafficEntry[]> = {
     { date: "Feb 8", visits: 120 }, { date: "Feb 9", visits: 145 }, { date: "Feb 10", visits: 200 },
     { date: "Feb 11", visits: 180 }, { date: "Feb 12", visits: 220 }, { date: "Feb 13", visits: 190 }, { date: "Feb 14", visits: 250 },
   ],
-  d2: [
+  d4: [
     { date: "Feb 8", visits: 40 }, { date: "Feb 9", visits: 55 }, { date: "Feb 10", visits: 48 },
     { date: "Feb 11", visits: 60 }, { date: "Feb 12", visits: 52 }, { date: "Feb 13", visits: 65 }, { date: "Feb 14", visits: 70 },
   ],
-  d3: [
-    { date: "Feb 8", visits: 80 }, { date: "Feb 9", visits: 110 }, { date: "Feb 10", visits: 95 },
-    { date: "Feb 11", visits: 130 }, { date: "Feb 12", visits: 150 }, { date: "Feb 13", visits: 120 }, { date: "Feb 14", visits: 160 },
+  d5: [
+    { date: "Feb 8", visits: 380 }, { date: "Feb 9", visits: 420 }, { date: "Feb 10", visits: 395 },
+    { date: "Feb 11", visits: 460 }, { date: "Feb 12", visits: 510 }, { date: "Feb 13", visits: 480 }, { date: "Feb 14", visits: 530 },
+  ],
+  d9: [
+    { date: "Feb 8", visits: 12 }, { date: "Feb 9", visits: 8 }, { date: "Feb 10", visits: 15 },
+    { date: "Feb 11", visits: 10 }, { date: "Feb 12", visits: 9 }, { date: "Feb 13", visits: 11 }, { date: "Feb 14", visits: 7 },
   ],
 }
+
+recomputeUserAggregates()
 
 export const globalStats = {
   totalUsers: users.filter((u) => u.role === "client").length,

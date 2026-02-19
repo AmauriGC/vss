@@ -6,28 +6,17 @@ import {
   HardDrive,
   Activity,
 } from "lucide-react"
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { StatCard } from "@/components/stat-card"
-import { TrafficChart } from "@/components/traffic-chart"
 import { globalStats, trafficData, deployments, users } from "@/lib/mock-data"
-
-const PLAN_COLORS = [
-  "hsl(220 10% 46%)",
-  "hsl(215 100% 50%)",
-  "hsl(152 60% 42%)",
-]
 
 const planData = [
   { name: "Basic", value: globalStats.planDistribution.Basic },
@@ -84,27 +73,22 @@ export function AdminDashboard() {
             <CardTitle className="text-base">Plan Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={planData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    dataKey="value"
-                    paddingAngle={3}
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {planData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={PLAN_COLORS[index]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Plan</TableHead>
+                  <TableHead className="text-right">Users</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {planData.map((p) => (
+                  <TableRow key={p.name}>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{p.value}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
@@ -113,39 +97,25 @@ export function AdminDashboard() {
             <CardTitle className="text-base">Deployment Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={statusData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis
-                    dataKey="status"
-                    tick={{ fill: "hsl(220 10% 46%)", fontSize: 12 }}
-                  />
-                  <YAxis
-                    tick={{ fill: "hsl(220 10% 46%)", fontSize: 12 }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(0 0% 100%)",
-                      border: "1px solid hsl(220 13% 91%)",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="hsl(215 100% 50%)"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {statusData.map((s) => (
+                  <TableRow key={s.status}>
+                    <TableCell className="font-medium">{s.status}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{s.count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
-
-      <TrafficChart data={trafficData} title="Global Traffic" />
     </div>
   )
 }
